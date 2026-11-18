@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The world in a day</title>
+<meta name="description" content="An interactive atlas of everyone alive: what fills their day, what they are thinking about, and where they are in life.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌍%3C/text%3E%3C/svg%3E">
+<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+<script src="data/atlas.js"></script>
+<script src="data/emoji.js"></script>
+<script src="data/hours.js"></script>
+<script src="data/profiles.js"></script>
+<script src="data/profiles-2.js"></script>
+<script defer src="js/app.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <script defer src="https://stats-relay.vercel.app/m.js?s=world-every-day"></script>
+</head>
+<body x-data="atlas()" class="bg-base-100 text-base-content">
+
+<header class="hero-bg">
+<i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i>
+<div class="relative max-w-5xl mx-auto px-5 pt-12 pb-10">
+<h1 class="title">The world in a day</h1>
+<p class="lead">Every person alive, sorted by what fills their day. Zoom from everyone down to individual niches, then see the hours, the career stages, and what each person is thinking about.</p>
+<div class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100/70 backdrop-blur my-5">
+<div class="stat"><div class="stat-title">People</div><div class="stat-value text-3xl" x-text="sh(root.v)"></div></div>
+<div class="stat"><div class="stat-title">Life groups</div><div class="stat-value text-3xl" x-text="root.c.length"></div></div>
+<div class="stat"><div class="stat-title">Niches</div><div class="stat-value text-3xl" x-text="leafCount"></div></div>
+<div class="stat"><div class="stat-title">Deep profiles</div><div class="stat-value text-3xl" x-text="profileCount"></div></div>
+</div>
+<div class="flex gap-2">
+<button class="btn btn-primary shine" @click="random()">Surprise me</button>
+<button class="btn btn-ghost" @click="toggle()">Switch theme</button>
+</div>
+</div>
+</header>
+
+<main class="max-w-5xl mx-auto px-5 py-6 grid gap-4 lg:grid-cols-[400px_minmax(0,1fr)] items-start">
+
+<section class="card bg-base-100 border border-base-300 p-4 lg:sticky lg:top-4">
+<div class="flex items-center gap-2 min-h-8">
+<button class="btn btn-sm" x-show="stack.length>1" @click="back()">Back</button>
+<div class="breadcrumbs text-xs"><ul><template x-for="n in stack" :key="n.n"><li x-text="n.n"></li></template></ul></div>
+</div>
+<div class="relative mx-auto w-full max-w-[300px] aspect-square mt-2">
+<svg x-ref="donut" viewBox="0 0 300 300" class="w-full swirl" role="img" :aria-label="'Donut chart of '+cur.n" @click="pickSvg($event)" x-html="paths"></svg>
+<div class="absolute inset-[26%] flex flex-col items-center justify-center text-center pointer-events-none">
+<div class="text-xs opacity-70 leading-tight" x-text="cur.n"></div>
+<div class="text-2xl font-semibold tracking-tight" x-text="sh(cur.v)"></div>
+</div>
+</div>
+<p class="text-xs opacity-60 text-center mt-3" x-show="stack.length===1">Select a slice or a row. Select it again to zoom in.</p>
+</section>
+
+<section class="grid gap-4 min-w-0">
+
+<div class="card bg-base-100 border border-base-300 p-5">
+<div class="flex items-center gap-4">
+<div class="emo">
+<template x-if="tg.img"><img :src="tg.img" :alt="tg.n"></template>
+<span x-show="!tg.img" x-text="emoji"></span>
+</div>
+<div class="min-w-0">
+<h2 class="text-xl font-semibold leading-tight" x-text="tg.n"></h2>
+<div class="flex gap-2 flex-wrap mt-1">
+<span class="badge badge-outline" x-text="fmt(tg.v)+' people'"></span>
+<span class="badge badge-outline" x-text="pc(tg.v/root.v*100)+' of the world'"></span>
+<span class="badge badge-primary badge-outline" x-show="tg.p">Deep profile</span>
+</div>
+</div>
+</div>
+<p class="mt-3" x-text="tg.d"></p>
+
+<div role="tablist" class="tabs tabs-boxed mt-4 w-fit">
+<a role="tab" class="tab" :class="tab==='overview'&&'tab-active'" @click="tab='overview'">Overview</a>
+<a role="tab" class="tab" :class="tab==='day'&&'tab-active'" @click="tab='day'">A day</a>
+<a role="tab" class="tab" :class="tab==='career'&&'tab-active'" @click="tab='career'">Career stages</a>
+<a role="tab" class="tab" :class="tab==='mind'&&'tab-active'" @click="tab='mind'">Mindset</a>
+</div>
+
+<div class="mt-4" x-show="tab==='overview'">
+<template x-if="tg.c">
+<div>
+<div class="text-sm opacity-70 mb-2">Inside this group</div>
+<div class="flex flex-wrap gap-2">
+<template x-for="k in tg.c" :key="k.n"><span class="badge badge-lg pill" @click="go([...stack,...(sel>=0?[tg]:[]),k])" x-text="k.n"></span></template>
+</div>
+<button class="btn btn-primary btn-sm mt-4 shine" x-show="sel>=0" @click="zoom()">Zoom in</button>
+</div>
+</template>
+<p class="text-sm opacity-70" x-show="!tg.c">This is a single niche. Open the other tabs for its typical hours, career stages, and mindset.</p>
+</div>
+
+<div class="mt-4" x-show="tab==='day'">
+<div class="dayb"><template x-for="(x,i) in tg.h" :key="i"><i :style="`width:${x/24*100}%;background:${C5[i]}`"></i></template></div>
+<div class="grid grid-cols-2 gap-2 text-sm"><template x-for="(x,i) in tg.h" :key="i"><span class="flex items-center gap-2"><i class="dot" :style="`background:${C5[i]}`"></i><span x-text="N5[i]+': '+fh(x)"></span></span></template></div>
+<template x-if="tg.p">
+<ol class="mt-5 space-y-2">
+<template x-for="s in tg.p.d" :key="s[0]"><li class="flex gap-3"><span class="badge badge-neutral w-14 justify-center" x-text="s[0]"></span><span x-text="s[1]"></span></li></template>
+</ol>
+</template>
+<p class="text-xs opacity-60 mt-4">Hours are illustrative averages, not measured data.</p>
+</div>
+
+<div class="mt-4" x-show="tab==='career'">
+<template x-if="tg.p"><ul class="steps steps-vertical"><template x-for="s in tg.p.s" :key="s[0]"><li class="step step-primary"><div class="text-left"><div class="font-medium" x-text="s[0]"></div><div class="text-sm opacity-80" x-text="s[1]"></div></div></li></template></ul></template>
+<div class="alert" x-show="!tg.p"><span>No deep profile for this one yet. Add it in <code>data/profiles-2.js</code>.</span></div>
+</div>
+
+<div class="mt-4" x-show="tab==='mind'">
+<template x-if="tg.p">
+<div class="grid gap-3 sm:grid-cols-3">
+<div class="rounded-box bg-base-200 p-3"><div class="font-medium mb-1">Thinking about</div><ul class="text-sm space-y-1"><template x-for="x in tg.p.t" :key="x"><li x-text="x"></li></template></ul></div>
+<div class="rounded-box bg-base-200 p-3"><div class="font-medium mb-1">Goals</div><ul class="text-sm space-y-1"><template x-for="x in tg.p.g" :key="x"><li x-text="x"></li></template></ul></div>
+<div class="rounded-box bg-base-200 p-3"><div class="font-medium mb-1">Worries</div><ul class="text-sm space-y-1"><template x-for="x in tg.p.w" :key="x"><li x-text="x"></li></template></ul></div>
+</div>
+</template>
+<div class="alert" x-show="!tg.p"><span>No deep profile for this one yet. Add it in <code>data/profiles-2.js</code>.</span></div>
+</div>
+</div>
+
+<div class="card bg-base-100 border border-base-300 p-2">
+<input type="search" class="input input-bordered w-full m-1" style="width:calc(100% - .5rem)" placeholder="Search niches, like game developers" aria-label="Search niches" x-model="q">
+<p class="p-3 text-sm opacity-70" x-show="rows.length===0">No niches match that search. Try a broader word.</p>
+<template x-for="r in rows" :key="r.id">
+<div class="row" :class="r.on&&'on'" role="button" tabindex="0" @click="rowClick(r)" @keydown.enter="rowClick(r)">
+<i class="dot" :style="`background:${r.f||'#888'};opacity:${r.o||1}`"></i>
+<span class="flex-1 min-w-0"><span x-text="r.n"></span><span class="block text-xs opacity-60" x-text="r.sub"></span></span>
+<span class="text-xs opacity-70" x-text="sh(r.v)"></span>
+<span class="text-xs opacity-70 w-10 text-right" x-text="r.pct"></span>
+</div>
+</template>
+</div>
+
+</section>
+</main>
+
+<footer class="max-w-5xl mx-auto px-5 pb-14 text-sm opacity-70">
+Every number is a rough estimate. Top-level groups follow global labor and population figures, deeper splits are educated guesses, and daily hours are illustrative averages.
+</footer>
+</body>
+</html>

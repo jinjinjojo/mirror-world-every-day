@@ -1,0 +1,25 @@
+body{font-family:Geist,Inter,system-ui,sans-serif}
+.hero-bg{position:relative;overflow:hidden;border-bottom:1px solid oklch(var(--b3))}
+.blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.35;animation:drift 18s ease-in-out infinite alternate}
+.b1{width:320px;height:320px;background:#2a78d6;top:-80px;left:-60px}
+.b2{width:280px;height:280px;background:#eb6834;top:20px;right:-40px;animation-delay:-6s}
+.b3{width:240px;height:240px;background:#1baf7a;bottom:-100px;left:40%;animation-delay:-12s}
+@keyframes drift{to{transform:translate(60px,40px) scale(1.15)}}
+.title{font-size:clamp(36px,8vw,68px);font-weight:600;letter-spacing:-.04em;line-height:1}
+.lead{max-width:34rem;font-size:1.1rem;margin:.75rem 0}
+.shine{position:relative;overflow:hidden}
+.shine::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-100%);transition:transform .6s}
+.shine:hover::after{transform:translateX(100%)}
+.swirl{animation:swirl .9s cubic-bezier(.2,.8,.2,1) both}
+@keyframes swirl{from{opacity:0;transform:rotate(-60deg) scale(.8)}}
+.slice{cursor:pointer;transition:opacity .2s}.slice:hover{opacity:.85}
+.emo{width:64px;height:64px;border-radius:14px;background:oklch(var(--b2));display:grid;place-items:center;font-size:34px;flex:none;overflow:hidden}
+.emo img{width:100%;height:100%;object-fit:cover}
+.dayb{display:flex;height:16px;border-radius:8px;overflow:hidden;gap:2px;margin:12px 0}
+.dayb i{display:block;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.dot{display:inline-block;width:12px;height:12px;border-radius:3px;flex:none}
+.row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .15s,transform .15s}
+.row:hover,.row.on{background:oklch(var(--b2))}.row:hover{transform:translateX(3px)}
+.pill{cursor:pointer;transition:transform .15s,background .15s}.pill:hover{transform:translateY(-2px)}
+:focus-visible{outline:2px solid #2a78d6;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
